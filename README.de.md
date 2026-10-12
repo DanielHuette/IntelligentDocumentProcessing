@@ -109,7 +109,10 @@ uv run pytest
 ## Betrieb
 
 Supabase (kostenloser Tarif) als Speicher, ein Hugging-Face-Space für n8n (Docker-Spaces brauchen
-seit Mitte 2026 ein PRO-Konto), Cloudflare Workers AI für Jev, Anthropic für Haiku. Schritt für Schritt: [Dokumentation/SETUP.de.md](Dokumentation/SETUP.de.md).
+seit Mitte 2026 ein PRO-Konto), Cloudflare Workers AI für Jev, Anthropic für Haiku. Hugging Face
+erreicht `api.cloudflare.com` nicht, deshalb reicht die Projektseite auf Cloudflare Pages die
+Jev-Anfragen von n8n unverändert weiter (`web/_worker.js`); ist diese Adresse nicht gesetzt, ruft der
+Ablauf Cloudflare direkt auf. Schritt für Schritt: [Dokumentation/SETUP.de.md](Dokumentation/SETUP.de.md).
 Datenbankschema: [sql/001_invoices.sql](sql/001_invoices.sql).
 
 ## Aufbau des Repositorys
@@ -122,7 +125,7 @@ Datenbankschema: [sql/001_invoices.sql](sql/001_invoices.sql).
 | `deploy/huggingface-space/` | Dockerfile für n8n auf einem Hugging-Face-Space |
 | `data/` | der erzeugte Testsatz |
 | `results/` | Rohantworten je System, `summary.json`, Vergleichstabellen |
-| `web/` | Projektseite |
+| `web/` | Projektseite und Jev-Weiterleitung für n8n auf Hugging Face |
 | `tests/` | Komponententests, nachgebildete Anbieter-Aufrufe, JavaScript-Weiche gegen Python geprüft |
 
 Alle Lieferantendaten, Steuernummern und Bankverbindungen in diesem Repository sind erfunden.

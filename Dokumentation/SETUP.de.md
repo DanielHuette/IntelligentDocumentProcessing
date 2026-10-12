@@ -4,16 +4,17 @@
 
 Supabase (kostenloser Tarif) speichert die Rechnungen und die Daten von n8n, ein Hugging-Face-Space
 betreibt n8n (Docker-Spaces auf CPU basic brauchen seit Mitte 2026 ein PRO-Konto), Cloudflare
-Workers AI stellt Jev bereit, Anthropic stellt Claude Haiku 5.5 bereit. Dauer: etwa 30 Minuten.
+Workers AI stellt Jev bereit, Anthropic stellt Claude Haiku 5.5 bereit, Cloudflare Pages liefert die
+Projektseite und leitet die Jev-Anfragen von n8n weiter. Dauer: etwa 40 Minuten.
 
 ## 1. Supabase: Datenbank
-**Context:** Dauerhafte Ablage für Rechnungen, Prüf-Warteschlange und n8n selbst. | **Input:** `sql/001_invoices.sql`. | **Output:** Projekt-Adresse, geheimer Schlüssel, Verbindungsdaten.
+**Context:** Dauerhafte Ablage für Rechnungen, Prüf-Warteschlange und n8n selbst. | **Input:** `sql/001_invoices.sql`. | **Output:** Projekt-Adresse, service_role-Schlüssel, Verbindungsdaten.
 
 | Schritt | Handlung | Ergebnis |
 |---|---|---|
 | 1 | Bei supabase.com registrieren, Projekt anlegen (Region Frankfurt, Datenbank-Passwort notieren). | Leere Postgres-Datenbank |
 | 2 | SQL Editor → New query → `sql/001_invoices.sql` einfügen → Run. | Tabellen `vendors` (15 Lieferanten) und `invoices`, Schema `n8n`, Dubletten-Prüfung, Zeilenschutz |
-| 3 | Project Settings → API Keys → Secret keys → neuen Schlüssel anlegen. | Schlüssel `sb_secret_…` für n8n |
+| 3 | Project Settings → API Keys → Legacy anon, service_role API keys → service_role → Reveal. | Schlüssel `eyJ…` für n8n; den neueren `sb_secret_…`-Schlüssel weist der Supabase-Zugang von n8n als „Unauthorized“ ab |
 | 4 | Connect → Session pooler. Host, Benutzer und Port kopieren. | Host wie `aws-0-eu-central-1.pooler.supabase.com`, Benutzer `postgres.<project-ref>`, Port 5432 |
 
 Der Session Pooler ist nötig, weil Hugging-Face-Spaces den direkten Datenbank-Host nur über IPv6
@@ -53,16 +54,30 @@ Jev kostet 0,042 USD pro Million Eingabe-Token; ein Dokument hat etwa 2.100 Toke
 | `DB_POSTGRESDB_USER` | Secret | `postgres.<project-ref>` |
 | `DB_POSTGRESDB_PASSWORD` | Secret | Datenbank-Passwort aus Schritt 1.1 |
 | `CLOUDFLARE_ACCOUNT_ID` | Secret | Konto-Nummer aus Schritt 2.3 |
+| `JEV_BASE_URL` | Variable | Adresse der Projektseite aus Schritt 5, z. B. `https://intelligentdocumentprocessing.speedofthespirit.dev` |
 | `N8N_HOST` | Variable | `<konto>-<space>.hf.space` |
 | `WEBHOOK_URL` | Variable | `https://<benutzer>-<space>.hf.space/` |
 | `N8N_EDITOR_BASE_URL` | Variable | `https://<benutzer>-<space>.hf.space/` |
 
-## 5. n8n: Ablauf
+## 5. Cloudflare Pages: Projektseite und Jev-Weiterleitung
+**Context:** Hugging-Face-Spaces können keine verschlüsselte Verbindung zu `api.cloudflare.com` aufbauen, n8n würde Jev also nie erreichen. Seiten auf der eigenen Cloudflare-Domain bleiben erreichbar. | **Input:** `web/`. | **Output:** Projektseite, deren `_worker.js` `POST /client/v4/accounts/<id>/ai/run` unverändert an Cloudflare weiterreicht.
+
+| Schritt | Handlung | Ergebnis |
+|---|---|---|
+| 1 | `npx wrangler pages deploy web --project-name <name>` mit einem Token, der Pages bearbeiten darf. | Seite unter `<name>.pages.dev` |
+| 2 | Pages-Projekt → Custom domains → eigene Subdomain eintragen. | Seite und Weiterleitung auf der eigenen Domain |
+| 3 | `JEV_BASE_URL` im Space (Schritt 4) auf diese Adresse setzen. | n8n erreicht Jev über die Weiterleitung |
+
+Die Weiterleitung speichert keinen Schlüssel: Der Cloudflare-Token reist mit jeder Anfrage mit,
+genau wie bei `api.cloudflare.com`. Ohne `JEV_BASE_URL` ruft der Ablauf Cloudflare direkt auf, das
+klappt überall außer auf Hugging Face.
+
+## 6. n8n: Ablauf
 | Schritt | Handlung | Ergebnis |
 |---|---|---|
 | 1 | Credentials → Header Auth `Cloudflare Workers AI`: Name `Authorization`, Wert `Bearer <token>`. | Zugang zu Jev |
 | 2 | Credentials → Header Auth `Anthropic`: Name `x-api-key`, Wert `<schlüssel>`. | Zugang zu Haiku |
-| 3 | Credentials → Supabase API `Supabase`: Host `https://<project-ref>.supabase.co`, geheimer Schlüssel. | Zugang zur Datenbank |
+| 3 | Credentials → Supabase API `Supabase`: Host `https://<project-ref>.supabase.co`, service_role-Schlüssel aus Schritt 1.3. | Zugang zur Datenbank |
 | 4 | Workflows → Import from file → `n8n/invoice_pipeline.workflow.json`. In den Schritten `Jev entscheidet`, `Haiku liest aus`, `Zweig A: buchen` und `Zweig B: zur Prüfung` die Zugangsdaten auswählen. | Ablauf vollständig |
 | 5 | Publish. `https://<benutzer>-<space>.hf.space/form/rechnungseingang` öffnen. | Öffentliches Formular |
 
@@ -74,7 +89,7 @@ Erwartete Ergebnisse der drei eingebauten Dokumente:
 | AWS | Prüfung | Netto plus Steuer ergibt nicht Brutto |
 | Global AI Shapers | Prüfung | keine Rechnung aus den Stammdaten, verdächtige Kontoänderung |
 
-## 6. Vorführung wach halten
+## 7. Vorführung wach halten
 GitHub-Repository → Settings → Secrets and variables → Actions → Variables → `DEMO_FORM_URL` =
 Formular-Adresse. Der Ablauf `keepalive.yml` lädt das Formular dann einmal täglich, damit Space
 und Supabase-Projekt nicht einschlafen.

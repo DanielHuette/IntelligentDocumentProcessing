@@ -4,16 +4,17 @@
 
 Supabase (free tier) stores the invoices and n8n's own data, a Hugging Face Space runs n8n (Docker
 Spaces on CPU basic need a PRO account since mid-2026), Cloudflare Workers AI serves Jev, Anthropic
-serves Claude Haiku 5.5. Allow about 30 minutes.
+serves Claude Haiku 5.5, Cloudflare Pages serves the project page and relays n8n's calls to Jev.
+Allow about 40 minutes.
 
 ## 1. Supabase: database
-**Context:** Persistent storage for invoices, the review queue and n8n itself. | **Input:** `sql/001_invoices.sql`. | **Output:** Project URL, secret key, connection details.
+**Context:** Persistent storage for invoices, the review queue and n8n itself. | **Input:** `sql/001_invoices.sql`. | **Output:** Project URL, service_role key, connection details.
 
 | Step | Action | Result |
 |---|---|---|
 | 1 | Sign up at supabase.com, create a project (region Frankfurt, note the database password). | Empty Postgres database |
 | 2 | SQL Editor → New query → paste `sql/001_invoices.sql` → Run. | Tables `vendors` (15 suppliers) and `invoices`, schema `n8n`, duplicate trigger, row level security |
-| 3 | Project Settings → API Keys → Secret keys → create one. | `sb_secret_…` key for n8n |
+| 3 | Project Settings → API Keys → Legacy anon, service_role API keys → service_role → Reveal. | `eyJ…` key for n8n; the n8n Supabase credential rejects the newer `sb_secret_…` keys as unauthorized |
 | 4 | Connect → Session pooler. Copy host, user and port. | Host like `aws-0-eu-central-1.pooler.supabase.com`, user `postgres.<project-ref>`, port 5432 |
 
 The session pooler is required because Hugging Face Spaces have no IPv6 route to the direct
@@ -53,16 +54,30 @@ Jev costs 0.042 USD per million input tokens; one document is about 2,100 tokens
 | `DB_POSTGRESDB_USER` | Secret | `postgres.<project-ref>` |
 | `DB_POSTGRESDB_PASSWORD` | Secret | Database password from step 1.1 |
 | `CLOUDFLARE_ACCOUNT_ID` | Secret | Account ID from step 2.3 |
+| `JEV_BASE_URL` | Variable | Address of the project page from step 5, e.g. `https://intelligentdocumentprocessing.speedofthespirit.dev` |
 | `N8N_HOST` | Variable | `<user>-<space>.hf.space` |
 | `WEBHOOK_URL` | Variable | `https://<user>-<space>.hf.space/` |
 | `N8N_EDITOR_BASE_URL` | Variable | `https://<user>-<space>.hf.space/` |
 
-## 5. n8n: workflow
+## 5. Cloudflare Pages: project page and Jev relay
+**Context:** Hugging Face Spaces cannot open TLS connections to `api.cloudflare.com`, so n8n would never reach Jev. Sites on your own Cloudflare domain stay reachable. | **Input:** `web/`. | **Output:** Project page whose `_worker.js` passes `POST /client/v4/accounts/<id>/ai/run` unchanged to Cloudflare.
+
+| Step | Action | Result |
+|---|---|---|
+| 1 | `npx wrangler pages deploy web --project-name <name>` with a token that may edit Pages. | Page on `<name>.pages.dev` |
+| 2 | Pages project → Custom domains → add your subdomain. | Page and relay on your domain |
+| 3 | Set `JEV_BASE_URL` in the Space (step 4) to that address. | n8n calls Jev through the relay |
+
+The relay stores no key: the Cloudflare token travels with each request, exactly as it would to
+`api.cloudflare.com`. Without `JEV_BASE_URL` the workflow calls Cloudflare directly, which works
+anywhere except Hugging Face.
+
+## 6. n8n: workflow
 | Step | Action | Result |
 |---|---|---|
 | 1 | Credentials → Header Auth `Cloudflare Workers AI`: name `Authorization`, value `Bearer <token>`. | Jev access |
 | 2 | Credentials → Header Auth `Anthropic`: name `x-api-key`, value `<key>`. | Haiku access |
-| 3 | Credentials → Supabase API `Supabase`: host `https://<project-ref>.supabase.co`, secret key. | Database access |
+| 3 | Credentials → Supabase API `Supabase`: host `https://<project-ref>.supabase.co`, service_role key from step 1.3. | Database access |
 | 4 | Workflows → Import from file → `n8n/invoice_pipeline.workflow.json`. Select the credentials in the nodes `Jev entscheidet`, `Haiku liest aus`, `Zweig A: buchen`, `Zweig B: zur Prüfung`. | Workflow complete |
 | 5 | Publish. Open `https://<user>-<space>.hf.space/form/rechnungseingang`. | Public form |
 
@@ -74,7 +89,7 @@ Expected results for the three built-in documents:
 | AWS | Review | net + tax does not equal gross |
 | Global AI Shapers | Review | not an invoice from master data, suspicious bank change |
 
-## 6. Keep the demo awake
+## 7. Keep the demo awake
 GitHub repository → Settings → Secrets and variables → Actions → Variables → `DEMO_FORM_URL` =
 form URL. The workflow `keepalive.yml` then loads the form once a day, which keeps the Space and
 the Supabase project from going to sleep.

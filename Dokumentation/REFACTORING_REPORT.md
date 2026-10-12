@@ -16,6 +16,8 @@
 | Jev on Workers AI is billed from AI Gateway credits, not the Workers plan | Documented in setup guide | `Dokumentation/SETUP.md` step 2 |
 | Free Docker Spaces on CPU basic were withdrawn in 2026 | Space runs under a PRO account; setup guide states it | `Dokumentation/SETUP.md` step 4 |
 | A public demo of a clean invoice would turn into a duplicate after the first visitor | The Telekom sample gets a fresh invoice number per submission | `src/idp/samples.py`, end-to-end run in a local n8n 2.42.5 |
+| n8n on Hugging Face timed out on every Jev call: the Space cannot complete TLS with `api.cloudflare.com`, `gateway.ai.cloudflare.com` or `workers.cloudflare.com`, while Supabase, Anthropic and sites on the own domain answer | Project page on Cloudflare Pages relays `POST /client/v4/accounts/<id>/ai/run` unchanged; the workflow reads the base address from `JEV_BASE_URL` | `web/_worker.js`, `tests/test_relay.py`; live run on the Space: Telekom booked, AWS review (sum), Global AI review (scam) |
+| The n8n Supabase credential rejected the new `sb_secret_…` key as unauthorized | Setup guide names the legacy service_role key | `Dokumentation/SETUP.md` step 1.3; credential test passes |
 
 ## Final check
 **Context:** Section 10 of the engineering standard. | **Input:** Clean copy without `.venv` and `.env`. | **Output:** Pass or fail per check.
@@ -23,9 +25,9 @@
 | Check | Result | Evidence |
 |---|---|---|
 | Install from lock file in a fresh environment | pass | `uv sync --locked` |
-| `ruff check`, `ruff format --check` | pass | 28 files |
+| `ruff check`, `ruff format --check` | pass | 29 files |
 | `mypy --strict` | pass | 21 source files |
-| `pytest` | pass | 70 tests |
+| `pytest` | pass | 71 tests |
 | README commands | pass | `idp corpus` reproduces `data/corpus.jsonl` byte for byte; `idp benchmark --limit`, `idp report`, `idp workflow`, `idp samples` run |
-| n8n workflow end to end | pass | local n8n 2.42.5 with real Jev and Haiku: Telekom booked, AWS review (sum), Global AI review (scam), empty input rejected |
+| n8n workflow end to end | pass | local n8n 2.42.5 and the live Space with real Jev and Haiku: Telekom booked, AWS review (sum), Global AI review (scam); locally also empty input rejected |
 | Secrets, absolute paths, debug output, TODO | none found | key values and patterns searched in all tracked files |

@@ -20,6 +20,12 @@ WORKFLOW_NAME = "Intelligent Document Processing – Rechnungseingang"
 FORM_PATH = "rechnungseingang"
 MAX_CHARACTERS = 8000
 HAIKU_MODEL = "claude-haiku-5-5"
+# Hugging Face Spaces cannot open TLS connections to api.cloudflare.com. JEV_BASE_URL points the
+# workflow at the relay in web/_worker.js; without it n8n calls Cloudflare directly.
+JEV_URL = (
+    "={{ $env.JEV_BASE_URL || 'https://api.cloudflare.com' }}"
+    "/client/v4/accounts/{{ $env.CLOUDFLARE_ACCOUNT_ID }}/ai/run"
+)
 _NAMESPACE = uuid.UUID("6f1c2a52-3d0e-4d55-9a62-2f3d8f0c7a11")
 
 GATE_JS = f"""\
@@ -493,7 +499,7 @@ def build_workflow() -> dict[str, Any]:
         _http(
             "Jev entscheidet",
             (660, 300),
-            "=https://api.cloudflare.com/client/v4/accounts/{{ $env.CLOUDFLARE_ACCOUNT_ID }}/ai/run",
+            JEV_URL,
             "={{ JSON.stringify($('Anfragen vorbereiten').first().json.jevRequest) }}",
         ),
         _code("Jev-Zeit messen", (880, 300), _STAMP_JS),

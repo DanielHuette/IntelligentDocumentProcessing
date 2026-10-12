@@ -106,7 +106,9 @@ demo documents to `samples/`.
 ## Deployment
 
 Supabase (free tier) for storage, a Hugging Face Space for n8n (Docker Spaces need a PRO account
-since mid-2026), Cloudflare Workers AI for Jev, Anthropic for Haiku. Step by step: [Dokumentation/SETUP.md](Dokumentation/SETUP.md). Database
+since mid-2026), Cloudflare Workers AI for Jev, Anthropic for Haiku. Hugging Face cannot reach
+`api.cloudflare.com`, so the project page on Cloudflare Pages relays n8n's Jev calls unchanged
+(`web/_worker.js`); without that address set, the workflow calls Cloudflare directly. Step by step: [Dokumentation/SETUP.md](Dokumentation/SETUP.md). Database
 schema: [sql/001_invoices.sql](sql/001_invoices.sql).
 
 ## Repository layout
@@ -119,7 +121,7 @@ schema: [sql/001_invoices.sql](sql/001_invoices.sql).
 | `deploy/huggingface-space/` | Dockerfile for n8n on a Hugging Face Space |
 | `data/` | the generated corpus |
 | `results/` | raw answers per system, `summary.json`, comparison tables |
-| `web/` | project page |
+| `web/` | project page and the Jev relay for n8n on Hugging Face |
 | `tests/` | unit tests, mocked provider calls, JavaScript gate checked against Python |
 
 All supplier data, tax IDs and bank details in this repository are invented. Telekom and Amazon

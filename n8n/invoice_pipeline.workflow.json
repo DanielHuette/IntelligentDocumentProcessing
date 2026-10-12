@@ -118,7 +118,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://api.cloudflare.com/client/v4/accounts/{{ $env.CLOUDFLARE_ACCOUNT_ID }}/ai/run",
+        "url": "={{ $env.JEV_BASE_URL || 'https://api.cloudflare.com' }}/client/v4/accounts/{{ $env.CLOUDFLARE_ACCOUNT_ID }}/ai/run",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": false,
