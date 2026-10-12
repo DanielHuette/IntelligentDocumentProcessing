@@ -1,0 +1,443 @@
+{
+  "name": "Intelligent Document Processing – Rechnungseingang",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Rechnungseingang prüfen",
+        "formDescription": "Wählen Sie ein Testdokument oder fügen Sie eigenen Rechnungstext ein. Jev entscheidet über Dokumentart, Lieferant und Vollständigkeit, Claude Haiku 5.5 liest die Beträge aus, feste Regeln rechnen nach. Nur sichere und fehlerfreie Rechnungen werden gebucht, alles andere geht zur Prüfung an einen Menschen.",
+        "formFields": {
+          "values": [
+            {
+              "fieldName": "document_choice",
+              "fieldLabel": "Testdokument",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Telekom – sauberer Durchlauf"
+                  },
+                  {
+                    "option": "Global AI Shapers – unbekannter Absender"
+                  },
+                  {
+                    "option": "AWS – Rechenfehler"
+                  },
+                  {
+                    "option": "Eigener Text"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldName": "custom_text",
+              "fieldLabel": "Eigener Text",
+              "fieldType": "textarea",
+              "placeholder": "Nur ausfüllen, wenn oben „Eigener Text“ gewählt ist"
+            }
+          ]
+        },
+        "options": {
+          "path": "rechnungseingang",
+          "buttonLabel": "Dokument prüfen",
+          "appendAttribution": false
+        }
+      },
+      "id": "d9d28125-c021-5a6d-822b-ec49b0d4a2ca",
+      "name": "Dokument einreichen",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.4,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "927ebd8e-9a16-5eae-bfe5-8bd5db50b4dc"
+    },
+    {
+      "parameters": {
+        "jsCode": "const SAMPLES = {\n \"Telekom – sauberer Durchlauf\": \"Telekom Deutschland GmbH · Landgrabenweg 151 · 53227 Bonn\\n\\nKessler Maschinenbau GmbH\\nIndustrieweg 5\\n48163 Münster\\n\\nRECHNUNG (fiktives Testdokument)\\n\\nRechnungsnummer: 412 7781 30519\\nRechnungsdatum: 02.10.2026\\nLeistungszeitraum: 01.09.2026 – 30.09.2026\\nKundennummer: 5520 1984\\n\\nPos. Bezeichnung                          Menge    Einzelpreis      Gesamt\\n1    Business Mobil M, Grundgebühr            3        39,95 €     119,85 €\\n2    Zusätzliche SIM-Karte                    2         9,95 €      19,90 €\\n3    Roaming-Verbindungen EU                  1        12,40 €      12,40 €\\n\\nNettobetrag                                                       152,15 €\\nUmsatzsteuer 19 %                                                  28,91 €\\nRechnungsbetrag                                                   181,06 €\\n\\nDer Rechnungsbetrag wird am 16.10.2026 von Ihrem Konto abgebucht.\\nHinweis: Ihr Tarif enthält ab November 5 GB zusätzliches Datenvolumen.\\n\\n--------------------------------------------------------------------------\\nTelekom Deutschland GmbH · Landgrabenweg 151 · 53227 Bonn\\nUSt-IdNr. DE811904217\\nBankverbindung: IBAN DE31 3701 0050 0248 5865 05\\n\",\n \"Global AI Shapers – unbekannter Absender\": \"Global AI Shapers Corp. · 1209 Orange Street · Wilmington, DE 19801, USA\\n\\nKessler Maschinenbau GmbH\\nIndustrieweg 5\\n48163 Münster\\nGermany\\n\\nINVOICE (fictitious test document)\\n\\nInvoice number: GAS-2026-0917\\nInvoice date: 01 Oct 2026\\n\\nItem Description                              Qty    Unit price          Total\\n1    AI strategy workshop (on site)              2   EUR 2,400.00   EUR 4,800.00\\n2    Prompt library licence, 12 months           1   EUR 1,200.00   EUR 1,200.00\\n\\nNet amount                                        EUR 6,000.00\\nTax                                                  EUR 0.00\\nInvoice total                                     EUR 6,000.00\\n\\nPayment due within 5 days by wire transfer.\\nIMPORTANT: Our bank details have changed. Please use the new account below.\\n\\n--------------------------------------------------------------------------\\nGlobal AI Shapers Corp. · Wilmington, Delaware\\nBank details: IBAN US62 0210 0021 0000 4471 2290\\n\",\n \"AWS – Rechenfehler\": \"Amazon Web Services EMEA SARL, Niederlassung Deutschland · Marcel-Breuer-Straße 12 · 80807 München\\n\\nKessler Maschinenbau GmbH\\nIndustrieweg 5\\n48163 Münster\\n\\nRECHNUNG (fiktives Testdokument)\\n\\nRechnungsnummer: EUINDE26-4471902\\nRechnungsdatum: 03.10.2026\\nLeistungszeitraum: September 2026\\nKontonummer: 7741 2290 1846\\n\\nPos. Bezeichnung                          Menge    Einzelpreis      Gesamt\\n1    Amazon EC2, Rechenleistung eu-central-1  1       612,40 €     612,40 €\\n2    Amazon S3, Speicher                      1        48,15 €      48,15 €\\n3    AWS Support Business                     1       100,00 €     100,00 €\\n\\nNettobetrag                                                       760,55 €\\nUmsatzsteuer 19 %                                                 144,50 €\\nRechnungsbetrag                                                   914,05 €\\n\\nDer Betrag wird Ihrer hinterlegten Kreditkarte belastet.\\n\\n--------------------------------------------------------------------------\\nAmazon Web Services EMEA SARL, Niederlassung Deutschland · Marcel-Breuer-Straße 12 · 80807 München\\nUSt-IdNr. DE317013094\\nBankverbindung: IBAN DE32 7002 0270 0015 8409 26\\n\"\n};\nconst FRESH_NUMBERS = {\"Telekom – sauberer Durchlauf\": \"412 7781 30519\"};\nconst CUSTOM_OPTION = \"Eigener Text\";\nconst MAX_CHARACTERS = 8000;\nconst JEV_QUESTIONS = {\n \"document_type\": {\n  \"type\": \"choice\",\n  \"instructions\": \"Which kind of document is this?\",\n  \"criteria\": {\n   \"invoice\": \"A supplier invoice that requests payment for delivered goods or services.\",\n   \"credit_note\": \"A credit note (Gutschrift) that reduces or refunds an earlier invoice.\",\n   \"payment_reminder\": \"A payment reminder or dunning letter (Mahnung) about an unpaid invoice.\",\n   \"delivery_note\": \"A delivery note (Lieferschein) listing shipped goods, without prices to pay.\",\n   \"quote\": \"A quote or offer (Angebot) with prices for possible future business.\",\n   \"purchase_order\": \"A purchase order (Bestellung) sent by the buyer to a supplier.\",\n   \"order_confirmation\": \"An order confirmation (Auftragsbestätigung) from the supplier.\",\n   \"contract\": \"A contract, framework agreement or excerpt of terms and conditions.\",\n   \"termination\": \"A termination or cancellation notice (Kündigung) for a contract.\",\n   \"receipt\": \"A small cash or card receipt (Quittung, Kassenbon), e.g. for travel expenses.\",\n   \"bank_statement\": \"A bank account statement (Kontoauszug) listing account movements.\",\n   \"email\": \"An ordinary business e-mail without a document that needs booking.\",\n   \"fraudulent_invoice\": \"Looks like an invoice but is an unsolicited offer or scam, e.g. a directory listing 'offer' in invoice layout or urgent payment to an unknown foreign account.\"\n  }\n },\n \"vendor\": {\n  \"type\": \"choice\",\n  \"instructions\": \"Which supplier from the master data issued this document or is its business counterparty? Kessler Maschinenbau GmbH is the buyer, never the answer.\",\n  \"criteria\": {\n   \"telekom\": \"Telekom Deutschland GmbH, Landgrabenweg 151, 53227 Bonn, VAT ID DE811904217\",\n   \"aws\": \"Amazon Web Services EMEA SARL, Niederlassung Deutschland, Marcel-Breuer-Straße 12, 80807 München, VAT ID DE317013094\",\n   \"brenner\": \"Brenner Bürobedarf GmbH, Hafenweg 12, 48155 Münster, VAT ID DE291847366\",\n   \"westfalen_logistik\": \"Westfalen Logistik Kühn KG, Speicherstraße 40, 44147 Dortmund, VAT ID DE276103958\",\n   \"lindner_it\": \"Lindner IT-Service GmbH, Am Kanonengraben 3, 48151 Münster, VAT ID DE305572814\",\n   \"ems_energie\": \"Ems-Energie Versorgung GmbH, Werkstraße 7, 48268 Greven, VAT ID DE284019375\",\n   \"autohaus_hesse\": \"Autohaus Hesse GmbH & Co. KG, Industriestraße 88, 48599 Gronau, VAT ID DE213958604\",\n   \"klar_reinigung\": \"Klar Gebäudereinigung GmbH, Albersloher Weg 210, 48167 Münster, VAT ID DE299384710\",\n   \"kanzlei_moeller\": \"Steuerkanzlei Möller & Partner mbB, Ludgeristraße 55, 48143 Münster, VAT ID DE267731049\",\n   \"cloudwerk\": \"Cloudwerk Software GmbH, Torstraße 140, 10119 Berlin, VAT ID DE322190486\",\n   \"druckerei_hansen\": \"Druckerei Hansen e.K., Nordstraße 9, 49477 Ibbenbüren, VAT ID DE258830172\",\n   \"vogt_immobilien\": \"Vogt Immobilien & Gewerbevermietung GmbH, Hammer Straße 300, 48153 Münster, VAT ID DE281164093\",\n   \"stahlmann\": \"Stahlmann Werkzeughandel GmbH, Ruhrallee 17, 45138 Essen, VAT ID DE249906618\",\n   \"feldkueche\": \"Feldküche Catering GmbH, Hansaring 61, 48155 Münster, VAT ID DE313347722\",\n   \"nordpapier\": \"Nordpapier Großhandel GmbH, Überseering 8, 22297 Hamburg, VAT ID DE266058831\",\n   \"unknown\": \"The document does not come from, and is not addressed to, exactly one of the listed suppliers (new supplier, private shop, bank, or scam).\"\n  }\n },\n \"formally_complete\": {\n  \"type\": \"noul\",\n  \"instructions\": \"Is this a formally complete German invoice with supplier name and address, supplier VAT ID or tax number, invoice number, invoice date, line items, net amount, tax rate, tax amount and gross total all printed?\"\n }\n};\nconst EXTRACTION_PROMPT = \"You extract booking data from documents received by the accounts payable team of Kessler Maschinenbau GmbH. The documents may be letters, e-mails, scans with recognition errors, table exports or XRechnung XML, in German or English.\\n\\nReturn one JSON object and nothing else, with these keys:\\n\\\"vendor_name\\\": supplier name as printed, or null,\\n\\\"invoice_number\\\": invoice number exactly as printed, or null if none is printed,\\n\\\"invoice_date\\\": date in ISO format YYYY-MM-DD, or null,\\n\\\"net\\\": net total as a number, or null,\\n\\\"tax_rate\\\": VAT rate in percent as a number (19 for 19 %), or null,\\n\\\"tax\\\": VAT amount as a number, or null,\\n\\\"gross\\\": gross total as a number, or null,\\n\\\"summary\\\": two short German sentences: what the document is about and what action it needs,\\n\\\"notes\\\": list of remarks that are not booking data (delivery notes, office hours, warnings)\\n\\nCopy amounts exactly as printed, even when they do not add up. Never correct or recompute them. Use null for anything the document does not state.\";\n\nconst form = $input.first().json;\nconst choice = form.document_choice;\nconst custom = String(form.custom_text || '').trim();\nlet text = choice === CUSTOM_OPTION ? custom : (SAMPLES[choice] || '');\nif (FRESH_NUMBERS[choice]) {\n  const fresh = FRESH_NUMBERS[choice].slice(0, -5) + String(Date.now()).slice(-5);\n  text = text.split(FRESH_NUMBERS[choice]).join(fresh);\n}\nlet problem = null;\nif (!text) problem = 'Bitte einen Rechnungstext einfügen oder ein Testdokument wählen.';\nelse if (text.length > MAX_CHARACTERS) problem = `Der Text ist länger als ${MAX_CHARACTERS} Zeichen.`;\n\nreturn [{\n  json: {\n    valid: problem === null,\n    problem,\n    source: choice === CUSTOM_OPTION ? 'custom' : choice,\n    documentText: text,\n    startedAt: Date.now(),\n    jevRequest: { model: 'typesafe/jev', input: { state: text, questions: JEV_QUESTIONS } },\n    haikuRequest: {\n      model: \"claude-haiku-5-5\",\n      max_tokens: 1500,\n      thinking: { type: 'disabled' },\n      system: EXTRACTION_PROMPT,\n      messages: [{ role: 'user', content: `<document>\\n${text}\\n</document>` }],\n    },\n  },\n}];\n"
+      },
+      "id": "deede385-714f-5c21-86d3-557e195049ce",
+      "name": "Anfragen vorbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2171a2a4-6c05-50ea-a783-e1652bf912e5",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2eba3f0d-2b2e-50a6-ab9b-0935fed3c22a",
+      "name": "Text gültig?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "={{ $('Anfragen vorbereiten').first().json.problem }}"
+      },
+      "id": "46063327-6e8c-5451-a05a-d86c58f195d4",
+      "name": "Hinweis anzeigen",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.4,
+      "position": [
+        660,
+        520
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.cloudflare.com/client/v4/accounts/{{ $env.CLOUDFLARE_ACCOUNT_ID }}/ai/run",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Anfragen vorbereiten').first().json.jevRequest) }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "8f20e886-c66d-5ee9-95a4-5c934c0b836b",
+      "name": "Jev entscheidet",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prepared = $('Anfragen vorbereiten').first().json;\nreturn [{ json: { jevMs: Date.now() - prepared.startedAt, haikuStartedAt: Date.now() } }];\n"
+      },
+      "id": "124f484a-8c12-5b58-8894-ef40ed9fd311",
+      "name": "Jev-Zeit messen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($('Anfragen vorbereiten').first().json.haikuRequest) }}",
+        "options": {
+          "timeout": 30000
+        },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        }
+      },
+      "id": "d7ad953d-911e-5bdd-a329-e0737ea3f21d",
+      "name": "Haiku liest aus",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        300
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 1000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const THRESHOLD = 0.85;\nconst ALLOWED_RATES_CENTS = [7, 19];\nconst SUM_TOLERANCE_CENTS = 1;\nconst TAX_TOLERANCE_CENTS = 2;\n\nfunction parseAmount(value) {\n  if (value === null || value === undefined || value === '' || typeof value === 'boolean') return null;\n  if (typeof value === 'number') return Number.isFinite(value) ? Math.round(value * 100) / 100 : null;\n  const match = String(value).match(/-?[\\d.,]+/);\n  if (!match) return null;\n  let text = match[0];\n  if (text.includes(',') && text.includes('.')) {\n    text = text.lastIndexOf(',') > text.lastIndexOf('.')\n      ? text.replace(/\\./g, '').replace(',', '.')\n      : text.replace(/,/g, '');\n  } else if (text.includes(',')) {\n    text = text.replace(',', '.');\n  }\n  const number = Number(text);\n  return Number.isFinite(number) ? Math.round(number * 100) / 100 : null;\n}\n\nfunction toCents(value) {\n  return Math.round(value * 100);\n}\n\nfunction arithmeticProblems(extraction) {\n  const net = parseAmount(extraction.net);\n  const rate = parseAmount(extraction.tax_rate);\n  const tax = parseAmount(extraction.tax);\n  const gross = parseAmount(extraction.gross);\n  if (net === null || rate === null || tax === null || gross === null) {\n    return ['totals incomplete: net, tax rate, tax and gross are required'];\n  }\n  const problems = [];\n  const ratePercent = Math.round(rate > 1 ? rate : rate * 100);\n  if (!ALLOWED_RATES_CENTS.includes(ratePercent)) {\n    problems.push(`tax rate ${ratePercent} % is not a German VAT rate`);\n  }\n  if (Math.abs(toCents(net) + toCents(tax) - toCents(gross)) > SUM_TOLERANCE_CENTS) {\n    problems.push(`net ${net} + tax ${tax} != gross ${gross}`);\n  }\n  if (Math.abs(Math.round(toCents(net) * ratePercent / 100) - toCents(tax)) > TAX_TOLERANCE_CENTS) {\n    problems.push(`tax ${tax} does not match ${ratePercent} % of net ${net}`);\n  }\n  return problems;\n}\n\nfunction gate(classification, extraction) {\n  if (classification.document_type !== 'invoice') {\n    return { route: 'needs_review', reasons: [`document type is ${classification.document_type}, not invoice`] };\n  }\n  const reasons = [];\n  if (classification.document_type_confidence < THRESHOLD) {\n    reasons.push(`document type confidence ${classification.document_type_confidence.toFixed(2)}`);\n  }\n  if (classification.vendor_key === 'unknown') {\n    reasons.push('vendor is not in master data');\n  } else if (classification.vendor_confidence < THRESHOLD) {\n    reasons.push(`vendor confidence ${classification.vendor_confidence.toFixed(2)}`);\n  }\n  if (classification.formally_complete_probability < THRESHOLD) {\n    reasons.push(`mandatory invoice fields incomplete (probability ${classification.formally_complete_probability.toFixed(2)})`);\n  }\n  if (!extraction.invoice_number) reasons.push('invoice number missing');\n  reasons.push(...arithmeticProblems(extraction));\n  return reasons.length ? { route: 'needs_review', reasons } : { route: 'approved', reasons: [] };\n}\n\nconst VENDOR_NAMES = {\n \"telekom\": \"Telekom Deutschland GmbH\",\n \"aws\": \"Amazon Web Services EMEA SARL, Niederlassung Deutschland\",\n \"brenner\": \"Brenner Bürobedarf GmbH\",\n \"westfalen_logistik\": \"Westfalen Logistik Kühn KG\",\n \"lindner_it\": \"Lindner IT-Service GmbH\",\n \"ems_energie\": \"Ems-Energie Versorgung GmbH\",\n \"autohaus_hesse\": \"Autohaus Hesse GmbH & Co. KG\",\n \"klar_reinigung\": \"Klar Gebäudereinigung GmbH\",\n \"kanzlei_moeller\": \"Steuerkanzlei Möller & Partner mbB\",\n \"cloudwerk\": \"Cloudwerk Software GmbH\",\n \"druckerei_hansen\": \"Druckerei Hansen e.K.\",\n \"vogt_immobilien\": \"Vogt Immobilien & Gewerbevermietung GmbH\",\n \"stahlmann\": \"Stahlmann Werkzeughandel GmbH\",\n \"feldkueche\": \"Feldküche Catering GmbH\",\n \"nordpapier\": \"Nordpapier Großhandel GmbH\"\n};\n\nfunction parseJsonObject(text) {\n  const start = String(text || '').indexOf('{');\n  const end = String(text || '').lastIndexOf('}');\n  if (start < 0 || end <= start) return null;\n  try { return JSON.parse(text.slice(start, end + 1)); } catch (error) { return null; }\n}\n\nfunction clamp(value) {\n  const number = Number(value);\n  return Number.isFinite(number) ? Math.min(Math.max(number, 0), 1) : 0;\n}\n\nconst prepared = $('Anfragen vorbereiten').first().json;\nconst timing = $('Jev-Zeit messen').first().json;\nconst jevBody = $('Jev entscheidet').first().json;\nconst haikuBody = $('Haiku liest aus').first().json;\nconst haikuMs = Date.now() - timing.haikuStartedAt;\n\nconst jevResult = (jevBody && jevBody.result) || {};\nconst answers = (jevResult.result && jevResult.result.answers) || jevResult.answers || null;\nconst haikuText = haikuBody && Array.isArray(haikuBody.content)\n  ? haikuBody.content.map((block) => block.text || '').join('')\n  : '';\nconst extraction = parseJsonObject(haikuText) || {};\n\nlet decision;\nlet classification = null;\nif (!answers) {\n  decision = { route: 'needs_review', reasons: ['Jev did not answer'] };\n} else {\n  classification = {\n    document_type: String((answers.document_type || {}).choice || ''),\n    document_type_confidence: clamp((answers.document_type || {}).confidence),\n    vendor_key: String((answers.vendor || {}).choice || 'unknown'),\n    vendor_confidence: clamp((answers.vendor || {}).confidence),\n    formally_complete_probability: clamp((answers.formally_complete || {}).noul),\n  };\n  decision = gate(classification, extraction);\n  if (!haikuText) decision = { route: 'needs_review', reasons: [...decision.reasons, 'Haiku did not answer'] };\n}\n\nconst vendorKey = classification ? classification.vendor_key : 'unknown';\nconst isoDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(extraction.invoice_date || ''))\n  ? extraction.invoice_date : null;\nconst confidences = classification\n  ? [classification.document_type_confidence, classification.vendor_confidence,\n     classification.formally_complete_probability]\n  : [0];\n\nreturn [{\n  json: {\n    vendor: VENDOR_NAMES[vendorKey] || extraction.vendor_name || null,\n    vendor_key: vendorKey,\n    document_type: classification ? classification.document_type : 'unrecognized',\n    invoice_number: extraction.invoice_number || null,\n    invoice_date: isoDate,\n    total_net: parseAmount(extraction.net),\n    tax_rate: parseAmount(extraction.tax_rate),\n    total_tax: parseAmount(extraction.tax),\n    total_gross: parseAmount(extraction.gross),\n    status: decision.route,\n    human_review_required: decision.route !== 'approved',\n    review_reasons: decision.reasons,\n    jev_confidence: Math.round(Math.min(...confidences) * 1000) / 1000,\n    jev_answers: classification,\n    haiku_summary: extraction.summary || null,\n    notes: Array.isArray(extraction.notes) ? extraction.notes.map(String) : [],\n    latency_ms: { jev: timing.jevMs, haiku: haikuMs },\n    source: prepared.source,\n  },\n}];\n"
+      },
+      "id": "786b342e-2f5b-5102-abf7-4e9215bec499",
+      "name": "Prüfregeln anwenden",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7047bfcb-4bcd-5da6-a184-0f29173e04b3",
+              "leftValue": "={{ $json.status === 'approved' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "eae2cc9c-6d0f-51d3-a67c-4f8de2b09f76",
+      "name": "Freigabe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "invoices",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "cb64b24d-d57e-5f33-b445-b1485231ccda",
+      "name": "Zweig A: buchen",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        200
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "tableId": "invoices",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "e7cba0f9-e502-5dbb-a82d-dd27cb68f158",
+      "name": "Zweig B: zur Prüfung",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        420
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const LABELS = {\n  'totals incomplete: net, tax rate, tax and gross are required': 'Summen unvollständig: Netto, Steuersatz, Steuer und Brutto werden gebraucht',\n  ' + tax ': ' + Steuer ',\n  ' != gross ': ' ergibt nicht Brutto ',\n  'tax rate ': 'Steuersatz ',\n  'does not match': 'passt nicht zu',\n  ' of net ': ' von Netto ',\n  'net ': 'Netto ',\n  'tax ': 'Steuer ',\n  'document type is': 'Dokumentart ist',\n  'not invoice': 'keine Rechnung',\n  'vendor is not in master data': 'Lieferant steht nicht in den Stammdaten',\n  'mandatory invoice fields incomplete': 'Pflichtangaben der Rechnung unvollständig',\n  'invoice number missing': 'Rechnungsnummer fehlt',\n  'is not a German VAT rate': 'ist kein deutscher Umsatzsteuersatz',\n  'invoice already booked': 'Rechnung ist bereits gebucht',\n  'Jev did not answer': 'Jev hat nicht geantwortet',\n  'Haiku did not answer': 'Haiku hat nicht geantwortet',\n  'confidence': 'Sicherheit',\n  'probability': 'Wahrscheinlichkeit',\n};\nconst DOCUMENT_TYPES = {\n  invoice: 'Rechnung', credit_note: 'Gutschrift', payment_reminder: 'Mahnung',\n  delivery_note: 'Lieferschein', quote: 'Angebot', purchase_order: 'Bestellung',\n  order_confirmation: 'Auftragsbestätigung', contract: 'Vertrag', termination: 'Kündigung',\n  receipt: 'Quittung', bank_statement: 'Kontoauszug', email: 'E-Mail ohne Beleg',\n  fraudulent_invoice: 'Verdacht auf Scheinrechnung', unrecognized: 'nicht erkannt',\n};\nfunction german(reason) {\n  const typed = Object.entries(DOCUMENT_TYPES)\n    .reduce((text, [key, label]) => text.split(`is ${key},`).join(`is ${label},`), reason);\n  return Object.entries(LABELS).reduce((text, [en, de]) => text.split(en).join(de), typed);\n}\nfunction escape(text) {\n  return String(text ?? '').replace(/[&<>\"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\n}\nfunction euro(value) {\n  return value === null || value === undefined ? '–'\n    : Number(value).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });\n}\n\nconst decided = $('Prüfregeln anwenden').first().json;\nconst stored = $input.first().json;\nconst saved = Boolean(stored && stored.id);\nconst row = saved ? stored : decided;\nconst approved = row.status === 'approved';\nconst reasons = (row.review_reasons || []).map((r) => `<li>${escape(german(r))}</li>`).join('');\nconst notes = (row.notes || []).map((n) => `<li>${escape(n)}</li>`).join('');\n\nconst html = `\n<h2>${approved ? 'Freigegeben und gebucht' : 'Zur Prüfung an die Buchhaltung'}</h2>\n<p>${approved\n  ? 'Alle Entscheidungen waren sicher genug und alle Prüfungen bestanden. Die Rechnung liegt als gebucht in der Datenbank.'\n  : 'Mindestens eine Prüfung ist nicht bestanden. Die Rechnung wartet in der Prüf-Warteschlange auf einen Menschen.'}</p>\n${reasons ? `<p><strong>Gründe:</strong></p><ul>${reasons}</ul>` : ''}\n<table>\n<tr><td>Lieferant</td><td>${escape(row.vendor || 'unbekannt')}</td></tr>\n<tr><td>Dokumentart</td><td>${escape(DOCUMENT_TYPES[row.document_type] || row.document_type)}</td></tr>\n<tr><td>Rechnungsnummer</td><td>${escape(row.invoice_number || '–')}</td></tr>\n<tr><td>Netto / Steuer / Brutto</td><td>${euro(row.total_net)} / ${euro(row.total_tax)} / ${euro(row.total_gross)}</td></tr>\n<tr><td>Sicherheit von Jev (schwächster Wert)</td><td>${Math.round((row.jev_confidence || 0) * 100)} %</td></tr>\n<tr><td>Antwortzeit Jev / Haiku</td><td>${row.latency_ms ? row.latency_ms.jev : '–'} ms / ${row.latency_ms ? row.latency_ms.haiku : '–'} ms</td></tr>\n</table>\n<p><strong>Zusammenfassung von Claude Haiku 5.5:</strong> ${escape(row.haiku_summary || '–')}</p>\n${notes ? `<p><strong>Aussortierte Notizen:</strong></p><ul>${notes}</ul>` : ''}\n<p>${saved ? `Gespeichert in Supabase, Datensatz ${escape(row.id)}.` : 'Nicht gespeichert: Die Datenbank war nicht erreichbar.'}</p>\n<p><a href=\"/form/rechnungseingang\">Weiteres Dokument prüfen</a></p>`;\n\nreturn [{ json: { html } }];\n"
+      },
+      "id": "0955b07b-f9ef-5d21-b468-2045f603a88c",
+      "name": "Ergebnis aufbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1980,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "showText",
+        "responseText": "={{ $json.html }}"
+      },
+      "id": "07ffa988-5546-5a04-a0c5-15713beca717",
+      "name": "Ergebnis anzeigen",
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.4,
+      "position": [
+        2200,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Dokument einreichen": {
+      "main": [
+        [
+          {
+            "node": "Anfragen vorbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anfragen vorbereiten": {
+      "main": [
+        [
+          {
+            "node": "Text gültig?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text gültig?": {
+      "main": [
+        [
+          {
+            "node": "Jev entscheidet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Hinweis anzeigen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jev entscheidet": {
+      "main": [
+        [
+          {
+            "node": "Jev-Zeit messen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jev-Zeit messen": {
+      "main": [
+        [
+          {
+            "node": "Haiku liest aus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Haiku liest aus": {
+      "main": [
+        [
+          {
+            "node": "Prüfregeln anwenden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prüfregeln anwenden": {
+      "main": [
+        [
+          {
+            "node": "Freigabe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Freigabe?": {
+      "main": [
+        [
+          {
+            "node": "Zweig A: buchen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Zweig B: zur Prüfung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zweig A: buchen": {
+      "main": [
+        [
+          {
+            "node": "Ergebnis aufbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Zweig B: zur Prüfung": {
+      "main": [
+        [
+          {
+            "node": "Ergebnis aufbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ergebnis aufbereiten": {
+      "main": [
+        [
+          {
+            "node": "Ergebnis anzeigen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

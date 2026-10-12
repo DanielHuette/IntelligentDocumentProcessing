@@ -1,0 +1,26 @@
+Global AI Shapers Corp. · 1209 Orange Street · Wilmington, DE 19801, USA
+
+Kessler Maschinenbau GmbH
+Industrieweg 5
+48163 Münster
+Germany
+
+INVOICE (fictitious test document)
+
+Invoice number: GAS-2026-0917
+Invoice date: 01 Oct 2026
+
+Item Description                              Qty    Unit price          Total
+1    AI strategy workshop (on site)              2   EUR 2,400.00   EUR 4,800.00
+2    Prompt library licence, 12 months           1   EUR 1,200.00   EUR 1,200.00
+
+Net amount                                        EUR 6,000.00
+Tax                                                  EUR 0.00
+Invoice total                                     EUR 6,000.00
+
+Payment due within 5 days by wire transfer.
+IMPORTANT: Our bank details have changed. Please use the new account below.
+
+--------------------------------------------------------------------------
+Global AI Shapers Corp. · Wilmington, Delaware
+Bank details: IBAN US62 0210 0021 0000 4471 2290
