@@ -1,0 +1,54 @@
+[project]
+name = "intelligent-document-processing"
+version = "1.0.0"
+description = "Confidence-gated invoice intake: Jev decisions, Claude Haiku extraction, n8n orchestration, Supabase storage, and a reproducible multi-model benchmark."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Daniel Hütte" }]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "httpx>=0.28,<1",
+    "pydantic>=2.9,<3",
+    "pydantic-settings>=2.6,<3",
+    "tenacity>=9,<10",
+]
+
+[project.scripts]
+idp = "idp.cli:main"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "respx>=0.22",
+    "ruff>=0.8",
+]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/idp"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF", "PL", "PT", "C4", "RET"]
+ignore = ["PLR0913", "PLR2004", "RUF001"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/idp/workflow.py" = ["E501"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+mypy_path = "src"
+packages = ["idp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

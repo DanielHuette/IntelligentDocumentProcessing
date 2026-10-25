@@ -1,0 +1,29 @@
+Telekom Deutschland GmbH · Landgrabenweg 151 · 53227 Bonn
+
+Kessler Maschinenbau GmbH
+Industrieweg 5
+48163 Münster
+
+RECHNUNG (fiktives Testdokument)
+
+Rechnungsnummer: 412 7781 30519
+Rechnungsdatum: 02.10.2026
+Leistungszeitraum: 01.09.2026 – 30.09.2026
+Kundennummer: 5520 1984
+
+Pos. Bezeichnung                          Menge    Einzelpreis      Gesamt
+1    Business Mobil M, Grundgebühr            3        39,95 €     119,85 €
+2    Zusätzliche SIM-Karte                    2         9,95 €      19,90 €
+3    Roaming-Verbindungen EU                  1        12,40 €      12,40 €
+
+Nettobetrag                                                       152,15 €
+Umsatzsteuer 19 %                                                  28,91 €
+Rechnungsbetrag                                                   181,06 €
+
+Der Rechnungsbetrag wird am 16.10.2026 von Ihrem Konto abgebucht.
+Hinweis: Ihr Tarif enthält ab November 5 GB zusätzliches Datenvolumen.
+
+--------------------------------------------------------------------------
+Telekom Deutschland GmbH · Landgrabenweg 151 · 53227 Bonn
+USt-IdNr. DE811904217
+Bankverbindung: IBAN DE31 3701 0050 0248 5865 05

@@ -1,0 +1,28 @@
+Amazon Web Services EMEA SARL, Niederlassung Deutschland · Marcel-Breuer-Straße 12 · 80807 München
+
+Kessler Maschinenbau GmbH
+Industrieweg 5
+48163 Münster
+
+RECHNUNG (fiktives Testdokument)
+
+Rechnungsnummer: EUINDE26-4471902
+Rechnungsdatum: 03.10.2026
+Leistungszeitraum: September 2026
+Kontonummer: 7741 2290 1846
+
+Pos. Bezeichnung                          Menge    Einzelpreis      Gesamt
+1    Amazon EC2, Rechenleistung eu-central-1  1       612,40 €     612,40 €
+2    Amazon S3, Speicher                      1        48,15 €      48,15 €
+3    AWS Support Business                     1       100,00 €     100,00 €
+
+Nettobetrag                                                       760,55 €
+Umsatzsteuer 19 %                                                 144,50 €
+Rechnungsbetrag                                                   914,05 €
+
+Der Betrag wird Ihrer hinterlegten Kreditkarte belastet.
+
+--------------------------------------------------------------------------
+Amazon Web Services EMEA SARL, Niederlassung Deutschland · Marcel-Breuer-Straße 12 · 80807 München
+USt-IdNr. DE317013094
+Bankverbindung: IBAN DE32 7002 0270 0015 8409 26

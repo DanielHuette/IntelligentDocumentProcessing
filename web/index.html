@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Intelligent Document Processing – Rechnungseingang mit Sicherheitsschwelle</title>
+<meta name="description" content="Rechnungseingang für den Mittelstand: Jev entscheidet über Dokumentart, Lieferant und Vollständigkeit, Claude Haiku 5.5 liest die Beträge, Regeln rechnen nach. Gebucht wird nur, was sicher ist. Acht Systeme auf 250 synthetischen Dokumenten verglichen.">
+<meta name="theme-color" content="#02060f">
+<link rel="canonical" href="https://intelligentdocumentprocessing.speedofthespirit.dev/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://intelligentdocumentprocessing.speedofthespirit.dev/">
+<meta property="og:title" content="Intelligent Document Processing">
+<meta property="og:description" content="Rechnungen, die nur gebucht werden, wenn alles stimmt. Acht Systeme auf 250 synthetischen Dokumenten verglichen.">
+<meta property="og:image" content="https://intelligentdocumentprocessing.speedofthespirit.dev/bilder/vorschau.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/archivo.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+<script src="frueh.js"></script>
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<a class="sprungmarke" href="#inhalt">Zum Inhalt springen</a>
+
+<header class="kopf">
+  <div class="huelle kopf__zeile">
+    <a class="marke" href="https://speedofthespirit.dev" aria-label="RepoCity, zur Hauptseite speedofthespirit.dev">
+      <svg class="marke__zeichen" viewBox="0 0 100 100" aria-hidden="true"><use href="#repocity-zeichen"/></svg>
+    </a>
+    <p class="kopf__name">Intelligent Document Processing</p>
+    <nav class="unternav" aria-label="Abschnitte des Projekts">
+      <a href="#problem">Problem</a>
+      <a href="#entscheidung">Entscheidung</a>
+      <a href="#messung">Messung</a>
+      <a href="#ausprobieren">Ausprobieren</a>
+    </nav>
+  </div>
+</header>
+
+<main id="inhalt">
+
+<!-- ============================== Projekt ============================== -->
+<section id="projekt" class="tafel" role="tabpanel" aria-labelledby="reiter-projekt" tabindex="-1">
+
+  <div class="buehne">
+    <div class="huelle buehne__raster">
+      <div class="buehne__text">
+        <h1>Rechnungen, die nur gebucht werden, wenn alles stimmt.</h1>
+        <p class="buehne__vorspann">Im Kreditoren-Postfach liegen Rechnungen zwischen Mahnungen, Lieferscheinen,
+        Verträgen und Betrugsversuchen. Heute öffnet jemand jedes Dokument, ordnet es ein, tippt Beträge ab
+        und rechnet nach. Diese Verarbeitung erledigt das in rund zwei Sekunden pro Dokument und bucht nur,
+        wenn jede Entscheidung sicher ist und jede Prüfung besteht. Alles andere landet mit Begründung bei
+        einem Menschen.</p>
+        <div class="knopfreihe">
+          <a class="knopf knopf--gold" href="https://danielironhack247-idp.hf.space/form/rechnungseingang">Live ausprobieren</a>
+          <a class="knopf knopf--rand" href="https://github.com/DanielHuette/IntelligentDocumentProcessing">Quelltext ansehen</a>
+        </div>
+        <p class="hinweis">War die Vorführung zwei Tage unbenutzt, braucht der erste Aufruf bis zu zwei Minuten
+        zum Aufwachen.</p>
+      </div>
+
+      <figure class="beleg" aria-label="Beispielrechnung der Telekom aus der Vorführung, nach der Prüfung gebucht">
+        <div class="beleg__papier">
+          <p class="beleg__kopf"><b>Rechnung</b> 412 7781 30519</p>
+          <p class="beleg__absender">Telekom Deutschland GmbH</p>
+          <dl class="beleg__posten">
+            <div><dt>Netto</dt><dd>152,15 €</dd></div>
+            <div><dt>USt 19 %</dt><dd>28,91 €</dd></div>
+            <div class="beleg__summe"><dt>Brutto</dt><dd>181,06 €</dd></div>
+          </dl>
+          <dl class="beleg__pruefung">
+            <div><dt>Dokumentart</dt><dd>Rechnung</dd></div>
+            <div><dt>Lieferant</dt><dd>in den Stammdaten</dd></div>
+            <div><dt>Pflichtangaben</dt><dd>vollständig</dd></div>
+            <div><dt>Summe</dt><dd>stimmt</dd></div>
+          </dl>
+          <p class="beleg__stempel">Gebucht</p>
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <section id="problem" class="abschnitt" aria-labelledby="problem-titel">
+    <div class="huelle">
+      <h2 id="problem-titel">Abtippen kostet Zeit. Übersehen kostet Geld.</h2>
+      <p class="vorspann">Die teuren Fehler im Rechnungseingang sind nicht die Tippfehler. Es sind die Rechnungen,
+      die durchrutschen: Eine fehlende Umsatzsteuer-Identifikationsnummer gefährdet den Vorsteuerabzug, eine
+      doppelt eingereichte Rechnung wird zweimal bezahlt, eine Scheinrechnung mit geänderter Bankverbindung
+      landet beim Betrüger. Ein Sprachmodell, das jede Rechnung freundlich durchwinkt, verschiebt diese Fehler
+      nur, es beseitigt sie nicht.</p>
+      <dl class="fakten">
+        <div class="fakt">
+          <dt><span class="fakt__zahl">13</span> Dokumentarten im Postfach</dt>
+          <dd>Rechnung, Gutschrift, Mahnung, Lieferschein, Angebot, Bestellung, Auftragsbestätigung, Vertrag,
+          Kündigung, Quittung, Kontoauszug, E-Mail ohne Beleg und Scheinrechnung.</dd>
+        </div>
+        <div class="fakt">
+          <dt><span class="fakt__zahl">6</span> Formate</dt>
+          <dd>Brief, E-Mail, Scan mit Lesefehlern, Tabellenexport, Englisch und XRechnung, die Firmen in
+          Deutschland seit 2025 empfangen können müssen.</dd>
+        </div>
+        <div class="fakt">
+          <dt><span class="fakt__zahl">6</span> eingebaute Rechnungsfehler</dt>
+          <dd>Falsche Summe, fehlende Umsatzsteuer-Identifikationsnummer, ausländischer Steuersatz, fehlende
+          Rechnungsnummer, unbekannter Lieferant, doppelt eingereichte Rechnung.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="entscheidung" class="abschnitt" aria-labelledby="entscheidung-titel">
+    <div class="huelle">
+      <h2 id="entscheidung-titel">Jedes Werkzeug macht nur, was es am besten kann</h2>
+      <p class="vorspann">Ein großes Sprachmodell für alles ist teuer, langsam und rechnet unzuverlässig. Hier trifft
+      ein Entscheidungsmodell die Einordnung, ein kleines Sprachmodell liest aus, und was sich ausrechnen lässt,
+      rechnet gewöhnlicher Programmcode.</p>
+      <ol class="kette">
+        <li class="glied">
+          <p class="glied__wer">n8n</p>
+          <h3>Eingang</h3>
+          <p>Formular nimmt ein Beispiel oder eigenen Text an und baut beide Anfragen.</p>
+        </li>
+        <li class="glied glied--kern">
+          <p class="glied__wer">Jev</p>
+          <h3>Entscheiden</h3>
+          <p>Dokumentart, Lieferant aus 15 Stammdaten, Pflichtangaben vollständig, jeweils mit
+          Wahrscheinlichkeit, ohne Text zu erzeugen.</p>
+        </li>
+        <li class="glied">
+          <p class="glied__wer">Claude Haiku 5.5</p>
+          <h3>Auslesen</h3>
+          <p>Rechnungsnummer, Datum, Netto, Steuersatz, Steuer, Brutto und eine Zusammenfassung.</p>
+        </li>
+        <li class="glied">
+          <p class="glied__wer">Regeln</p>
+          <h3>Nachrechnen</h3>
+          <p>Netto plus Steuer gleich Brutto, deutscher Steuersatz, jede Sicherheit mindestens 85 %.</p>
+        </li>
+        <li class="glied">
+          <p class="glied__wer">Supabase</p>
+          <h3>Ablegen</h3>
+          <p>Gebucht oder Prüf-Warteschlange. Die Datenbank lässt keine Rechnung zweimal buchen.</p>
+        </li>
+      </ol>
+      <p class="link-weiter"><a href="#organigramm">Den Ablauf als bewegtes Organigramm ansehen</a></p>
+
+      <h3 class="zwischentitel">Gebucht wird nur, wenn alle sieben Bedingungen erfüllt sind</h3>
+      <table class="tabelle tabelle--regeln">
+        <thead><tr><th scope="col">Prüfung</th><th scope="col">Durch</th><th scope="col">Regel</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Dokument ist eine Rechnung</th><td data-label="Durch">Jev, Auswahlfrage</td><td data-label="Regel">Sicherheit ≥ 85 %</td></tr>
+          <tr><th scope="row">Lieferant steht in den Stammdaten</th><td data-label="Durch">Jev, Auswahlfrage</td><td data-label="Regel">einer von 15 Lieferanten, Sicherheit ≥ 85 %</td></tr>
+          <tr><th scope="row">Pflichtangaben nach § 14 Umsatzsteuergesetz vorhanden</th><td data-label="Durch">Jev, Ja-Nein-Frage</td><td data-label="Regel">Wahrscheinlichkeit ≥ 85 %</td></tr>
+          <tr><th scope="row">Rechnungsnummer aufgedruckt</th><td data-label="Durch">Haiku, Auslesen</td><td data-label="Regel">nicht leer</td></tr>
+          <tr><th scope="row">Summen stimmen</th><td data-label="Durch">Programmcode</td><td data-label="Regel">Netto + Steuer = Brutto (±0,01), Steuer = Satz × Netto (±0,02)</td></tr>
+          <tr><th scope="row">Deutscher Steuersatz</th><td data-label="Durch">Programmcode</td><td data-label="Regel">19 % oder 7 %</td></tr>
+          <tr><th scope="row">Noch nicht gebucht</th><td data-label="Durch">Datenbank</td><td data-label="Regel">Lieferant + Rechnungsnummer unter den gebuchten Rechnungen eindeutig</td></tr>
+        </tbody>
+      </table>
+      <p class="bildunter">Messung und Live-Ablauf verwenden dieselben Schwellen, Fragen und Anweisungen: Der
+      n8n-Ablauf wird aus demselben Programmcode erzeugt wie die Messung.</p>
+    </div>
+  </section>
+
+  <section id="messung" class="abschnitt" aria-labelledby="messung-titel">
+    <div class="huelle">
+      <h2 id="messung-titel">250 synthetische Dokumente, acht Systeme, dieselbe Weiche</h2>
+      <p class="vorspann">Jedes System bekam dieselben 250 Dokumente. Weil der Testsatz künstlich erzeugt ist,
+      steht für jedes Dokument fest, ob es gebucht werden darf. Gezählt wird, wie oft die Weiche richtig lag,
+      wie oft sie eine fehlerhafte Rechnung durchgelassen hätte, wie schnell und wie teuer.</p>
+      <dl class="fakten fakten--messung">
+        <div class="fakt">
+          <dt><span class="fakt__zahl">0</span> fehlerhafte Rechnungen gebucht</dt>
+          <dd>Wie Claude Sonnet 5.5 und DeepSeek V4 Pro, aber 26- bzw. 18-mal günstiger.</dd>
+        </div>
+        <div class="fakt">
+          <dt><span class="fakt__zahl">338 ms</span> braucht Jev für die Entscheidung</dt>
+          <dd>Median über 250 Aufrufe, 95 % unter 446 ms. Ohne Text zu erzeugen.</dd>
+        </div>
+        <div class="fakt">
+          <dt><span class="fakt__zahl">0,39 $</span> je 1.000 Dokumente</dt>
+          <dd>Das günstigste der acht gemessenen Systeme, Entscheidung und Auslesen zusammen.</dd>
+        </div>
+      </dl>
+
+      <h3 class="zwischentitel">Alle Systeme im Vergleich</h3>
+      <table class="tabelle tabelle--vergleich">
+        <thead>
+          <tr><th scope="col">System</th><th scope="col">Weiche richtig</th><th scope="col">Fälschlich freigegeben</th><th scope="col">Unnötig zur Prüfung</th><th scope="col">Formprüfung</th><th scope="col">Antwortzeit (Median)</th><th scope="col">Kosten je 1.000</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">Claude Sonnet 5.5</th><td data-label="Weiche richtig">100,0 %</td><td data-label="Fälschlich freigegeben">0</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Formprüfung">98,4 %</td><td data-label="Antwortzeit (Median)">3.601 ms</td><td data-label="Kosten je 1.000">10,12 $</td></tr>
+          <tr><th scope="row">DeepSeek V4 Pro</th><td data-label="Weiche richtig">100,0 %</td><td data-label="Fälschlich freigegeben">0</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Formprüfung">96,4 %</td><td data-label="Antwortzeit (Median)">20.245 ms</td><td data-label="Kosten je 1.000">7,10 $</td></tr>
+          <tr><th scope="row">GPT-5.6 Terra</th><td data-label="Weiche richtig">98,4 %</td><td data-label="Fälschlich freigegeben">4</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Formprüfung">90,8 %</td><td data-label="Antwortzeit (Median)">2.210 ms</td><td data-label="Kosten je 1.000">5,14 $</td></tr>
+          <tr><th scope="row">GPT-5.6 Luna</th><td data-label="Weiche richtig">98,0 %</td><td data-label="Fälschlich freigegeben">5</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Formprüfung">89,6 %</td><td data-label="Antwortzeit (Median)">2.271 ms</td><td data-label="Kosten je 1.000">0,55 $</td></tr>
+          <tr class="tabelle__unser"><th scope="row">Jev + Claude Haiku 5.5</th><td data-label="Weiche richtig">97,2 %</td><td data-label="Fälschlich freigegeben">0</td><td data-label="Unnötig zur Prüfung">7</td><td data-label="Formprüfung">93,6 %</td><td data-label="Antwortzeit (Median)">1.977 ms</td><td data-label="Kosten je 1.000">0,39 $</td></tr>
+          <tr><th scope="row">Mistral Small 3.1 24B</th><td data-label="Weiche richtig">96,0 %</td><td data-label="Fälschlich freigegeben">10</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Formprüfung">86,4 %</td><td data-label="Antwortzeit (Median)">4.799 ms</td><td data-label="Kosten je 1.000">0,71 $</td></tr>
+          <tr><th scope="row">Llama 3.3 70B</th><td data-label="Weiche richtig">94,8 %</td><td data-label="Fälschlich freigegeben">13</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Formprüfung">88,0 %</td><td data-label="Antwortzeit (Median)">5.478 ms</td><td data-label="Kosten je 1.000">0,89 $</td></tr>
+          <tr><th scope="row">Claude Haiku 5.5</th><td data-label="Weiche richtig">94,0 %</td><td data-label="Fälschlich freigegeben">1</td><td data-label="Unnötig zur Prüfung">14</td><td data-label="Formprüfung">89,6 %</td><td data-label="Antwortzeit (Median)">2.492 ms</td><td data-label="Kosten je 1.000">0,52 $</td></tr>
+        </tbody>
+      </table>
+      <p class="bildunter">Kosten aus den abgerechneten Token und den Listenpreisen vom 8. Oktober 2026.
+      Antwortzeit: Median über 250 echte Anfragen. Rohdaten und Messprogramm liegen im Repository.</p>
+
+      <div class="befunde">
+        <div class="befund">
+          <svg class="befund__zeichen" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.4-3 8.3-7 10-4-1.7-7-5.6-7-10V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>
+          <p><b>Der Preis der Vorsicht:</b> 7 von 250 Dokumenten gingen unnötig zur Prüfung, meist
+          Tabellenexporte und XRechnungen. Eine unnötige Prüfung kostet eine Minute, eine falsch bezahlte
+          Rechnung kostet Geld.</p>
+        </div>
+        <div class="befund befund--warnung">
+          <svg class="befund__zeichen" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5L21 19.5H3z"/><path d="M12 10v4.2M12 16.8v.2"/></svg>
+          <p><b>Wo andere danebenlagen:</b> GPT-5.6 Terra und Luna haben 4 bzw. 5 Rechnungen ohne
+          Umsatzsteuer-Identifikationsnummer freigegeben. Llama 3.3 hat 13 fehlerhafte Rechnungen freigegeben,
+          fünf davon, weil es falsche Summen beim Auslesen stillschweigend korrigiert hat.</p>
+        </div>
+      </div>
+      <p class="link-weiter"><a href="#benchmarks">Alle Messwerte als Diagramme ansehen</a></p>
+    </div>
+  </section>
+
+  <section id="ausprobieren" class="abschnitt abschnitt--dunkel" aria-labelledby="ausprobieren-titel">
+    <div class="huelle">
+      <h2 id="ausprobieren-titel">Drei Dokumente, drei Ergebnisse</h2>
+      <p class="vorspann">Im Formular stehen drei erfundene Testdokumente zur Auswahl. Jedes zeigt einen anderen Weg
+      durch die Weiche. Ein eigener Rechnungstext geht ebenso.</p>
+      <ol class="schritte">
+        <li class="schritt">
+          <h3>Formular öffnen</h3>
+          <p><a class="url" href="https://danielironhack247-idp.hf.space/form/rechnungseingang">danielironhack247-idp.hf.space/form/rechnungseingang</a></p>
+          <p class="ergebnis">War die Vorführung länger unbenutzt, dauert der <b>erste Aufruf bis zu zwei
+          Minuten</b>. Danach antwortet jeder Durchlauf in wenigen Sekunden.</p>
+        </li>
+        <li class="schritt">
+          <h3>„Telekom – sauberer Durchlauf“</h3>
+          <p>Mobilfunkrechnung mit allen Pflichtangaben und stimmigen Summen.</p>
+          <p class="ergebnis"><b>Freigegeben und gebucht.</b> Jev erkennt Rechnung und Lieferant praktisch
+          sicher, Haiku liest 181,06 € aus, die Regeln finden nichts. Jeder Durchlauf bekommt eine neue
+          Rechnungsnummer, damit dieses Beispiel immer buchbar bleibt.</p>
+        </li>
+        <li class="schritt">
+          <h3>„AWS – Rechenfehler“</h3>
+          <p>Bekannter Lieferant, alle Angaben vorhanden, aber 760,55 € + 144,50 € ergeben nicht 914,05 €.</p>
+          <p class="ergebnis"><b>Zur Prüfung.</b> Jev ist sich sicher, doch die Nachrechnung schlägt fehl.
+          Haiku hat die Beträge so übernommen, wie sie gedruckt sind, statt sie stillschweigend zu
+          korrigieren.</p>
+        </li>
+        <li class="schritt">
+          <h3>„Global AI Shapers – unbekannter Absender“</h3>
+          <p>Firma aus Delaware, keine Umsatzsteuer-Identifikationsnummer, Zahlung in fünf Tagen auf ein
+          „neues“ Konto.</p>
+          <p class="ergebnis"><b>Zur Prüfung, mit Betrugsverdacht.</b> Jev ordnet das Dokument als
+          Scheinrechnung ein, Haiku vermerkt die geänderte Bankverbindung als Warnung.</p>
+        </li>
+        <li class="schritt">
+          <h3>Eigenen Text einfügen</h3>
+          <p>„Eigener Text“ wählen und einen Rechnungstext einfügen, höchstens 8.000 Zeichen.</p>
+          <p class="ergebnis">Gebucht wird nur, was von einem der 15 Lieferanten der erfundenen Kessler
+          Maschinenbau GmbH stammt, alles andere geht <b>zur Prüfung, mit Begründung</b>. Wer dieselbe
+          Rechnung zweimal einreicht, sieht beim zweiten Mal: <b>Rechnung ist bereits gebucht</b>.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+</section>
+
+<!-- ============================== Organigramm ============================== -->
+<section id="organigramm" class="tafel" role="tabpanel" aria-labelledby="reiter-organigramm" tabindex="-1">
+  <div class="huelle tafel__kopf">
+    <h2>So läuft eine Rechnung durch das System</h2>
+    <p class="vorspann">Fünf Stationen entscheiden über jedes Dokument. Wählen Sie ein Beispiel aus der
+    Vorführung und verfolgen Sie, wo es gebucht oder angehalten wird. Unter jeder Station steht, welche
+    Fähigkeiten dort angewandt sind.</p>
+  </div>
+
+  <div class="huelle huelle--weit">
+    <div class="fluss-steuerung">
+      <p class="fluss-steuerung__titel" id="fall-titel">Beispiel</p>
+      <div class="faelle" role="group" aria-labelledby="fall-titel">
+        <button type="button" class="fall" data-fall="telekom" aria-pressed="true">Telekom, sauber</button>
+        <button type="button" class="fall" data-fall="aws" aria-pressed="false">AWS, Rechenfehler</button>
+        <button type="button" class="fall" data-fall="global" aria-pressed="false">Unbekannter Absender</button>
+        <button type="button" class="fall" data-fall="doppelt" aria-pressed="false">Zweimal eingereicht</button>
+      </div>
+      <button type="button" class="abspiel" data-fluss-abspiel aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="abspiel__pause" d="M8 5v14M16 5v14"/><path class="abspiel__start" d="M7 4.5l12 7.5-12 7.5z"/></svg>
+        <span class="abspiel__text">Anhalten</span>
+      </button>
+    </div>
+
+    <div class="fluss" data-fluss>
+      <svg class="fluss__linien" aria-hidden="true"></svg>
+      <article class="station" data-station="formular">
+        <h3>Formular</h3>
+        <p class="station__werkzeug">n8n auf einem Hugging Face Space, im Docker-Container</p>
+        <p class="station__text">Nimmt ein Beispiel oder eigenen Text bis 8.000 Zeichen an und baut die
+        Anfragen an Jev und Haiku.</p>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten">
+          <li>Automatisierung mit n8n</li><li>Docker</li>
+        </ul>
+        <p class="station__meldung" data-meldung></p>
+      </article>
+      <article class="station station--kern" data-station="jev">
+        <h3>Jev entscheidet</h3>
+        <p class="station__werkzeug">TypeSafe Jev auf Cloudflare Workers AI, erreicht über die Weiterleitung
+        dieser Seite</p>
+        <p class="station__text">Dokumentart, Lieferant aus 15 Stammdaten und Pflichtangaben, jeweils als
+        Wahl mit Wahrscheinlichkeit statt als frei geschriebener Text.</p>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten">
+          <li>Feste Entscheidungen mit kalibrierten Wahrscheinlichkeiten</li><li>Cloudflare Workers AI</li><li>Weiterleitung als Cloudflare-Pages-Worker</li>
+        </ul>
+        <p class="station__meldung" data-meldung></p>
+      </article>
+      <article class="station" data-station="haiku">
+        <h3>Haiku liest aus</h3>
+        <p class="station__werkzeug">Claude Haiku 5.5 über die Programmierschnittstelle von Anthropic</p>
+        <p class="station__text">Rechnungsnummer, Datum, Netto, Steuersatz, Steuer, Brutto und eine
+        Zusammenfassung in zwei Sätzen, als ein festes Datenobjekt.</p>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten">
+          <li>Sprachmodell über Programmierschnittstelle</li><li>Strukturierte Ausgabe als JSON</li>
+        </ul>
+        <p class="station__meldung" data-meldung></p>
+      </article>
+      <article class="station" data-station="regeln">
+        <h3>Regeln und Weiche</h3>
+        <p class="station__werkzeug">Programmcode im n8n-Ablauf, dieselben Regeln wie im Python-Paket</p>
+        <p class="station__text">Netto plus Steuer gleich Brutto, 19 % oder 7 %, jede Sicherheit mindestens
+        85 %. Nur wenn alles stimmt, geht es in Zweig A.</p>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten">
+          <li>Regelprüfung in Programmcode</li><li>Sicherheitsschwelle</li>
+        </ul>
+        <p class="station__meldung" data-meldung></p>
+      </article>
+      <article class="station station--ziel" data-station="gebucht">
+        <h3>Zweig A: gebucht</h3>
+        <p class="station__werkzeug">Supabase, PostgreSQL</p>
+        <p class="station__text">Ein Trigger in der Datenbank schickt eine schon gebuchte Rechnungsnummer
+        in die Prüfung.</p>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten">
+          <li>PostgreSQL-Trigger</li><li>Eindeutiger Index</li>
+        </ul>
+        <p class="station__meldung" data-meldung></p>
+      </article>
+      <article class="station station--ziel station--pruefung" data-station="pruefung">
+        <h3>Zweig B: zur Prüfung</h3>
+        <p class="station__werkzeug">Supabase, PostgreSQL</p>
+        <p class="station__text">Warteschlange mit Gründen für einen Menschen. Lesen und schreiben darf nur
+        der geheime Schlüssel von n8n.</p>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten">
+          <li>Zeilenrechte (Row Level Security)</li>
+        </ul>
+        <p class="station__meldung" data-meldung></p>
+      </article>
+    </div>
+    <p class="fluss__protokoll" data-protokoll aria-live="polite"></p>
+  </div>
+
+  <div class="huelle hintergrund">
+    <h3 class="zwischentitel">Was im Hintergrund automatisch läuft</h3>
+    <div class="ketten">
+      <section class="minikette" aria-labelledby="mk-eins">
+        <h4 id="mk-eins">Ein Programm, zwei Einsätze</h4>
+        <ol class="minikette__glieder">
+          <li>Python-Paket mit Schwellen, Anweisungen und Fragen</li>
+          <li>Befehl <code>idp workflow</code> erzeugt den n8n-Ablauf</li>
+          <li>Live-Ablauf und Messung rechnen mit denselben Regeln</li>
+        </ol>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten"><li>Python</li><li>Code-Erzeugung</li></ul>
+      </section>
+      <section class="minikette" aria-labelledby="mk-zwei">
+        <h4 id="mk-zwei">Prüfung bei jedem Hochladen</h4>
+        <ol class="minikette__glieder">
+          <li>GitHub Actions startet</li>
+          <li>ruff, mypy und pytest laufen</li>
+          <li>Erzeugter und gespeicherter Ablauf müssen gleich sein</li>
+        </ol>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten"><li>Continuous Integration</li><li>Automatische Tests</li><li>Typprüfung</li></ul>
+      </section>
+      <section class="minikette" aria-labelledby="mk-drei">
+        <h4 id="mk-drei">Messstand</h4>
+        <ol class="minikette__glieder">
+          <li>Generator erzeugt 250 Dokumente mit bekannter Antwort</li>
+          <li>Acht Systeme durchlaufen dieselbe Weiche</li>
+          <li>Bericht und Tabellen entstehen aus den Rohdaten</li>
+        </ol>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten"><li>Bewertung mit Messreihen</li><li>Künstlicher Testsatz</li></ul>
+      </section>
+      <section class="minikette" aria-labelledby="mk-vier">
+        <h4 id="mk-vier">Wach halten</h4>
+        <ol class="minikette__glieder">
+          <li>GitHub Actions, einmal am Tag</li>
+          <li>Ruft das Formular auf</li>
+          <li>Space und Datenbank schlafen nicht ein</li>
+        </ol>
+        <ul class="faehigkeiten" aria-label="Angewandte Fähigkeiten"><li>Zeitgesteuerte Abläufe</li></ul>
+      </section>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== Benchmarks ============================== -->
+<section id="benchmarks" class="tafel" role="tabpanel" aria-labelledby="reiter-benchmarks" tabindex="-1">
+  <div class="huelle tafel__kopf">
+    <h2>Keine fehlerhafte Rechnung gebucht, für 0,39 $ je 1.000 Dokumente</h2>
+    <p class="vorspann">Acht Systeme bekamen dieselben 250 künstlichen Dokumente und dieselbe Weiche. Weil der
+    Testsatz erzeugt ist, steht für jedes Dokument fest, ob es gebucht werden darf. Gemessen am
+    8. Oktober 2026, jede Zahl stammt aus
+    <a href="https://github.com/DanielHuette/IntelligentDocumentProcessing/blob/main/results/summary.json"><code>results/summary.json</code></a>.</p>
+  </div>
+
+  <div class="huelle diagramme">
+    <figure class="diagramm diagramm--breit" data-diagramm="sicherheit">
+      <figcaption>
+        <h3>Sicherheit und Preis</h3>
+        <p>Nur drei Systeme haben keine einzige fehlerhafte Rechnung freigegeben. Der Hybrid aus Jev und
+        Claude Haiku 5.5 ist von ihnen der günstigste: 26-mal günstiger als Claude Sonnet 5.5 und 18-mal
+        günstiger als DeepSeek V4 Pro. Unten links ist besser.</p>
+      </figcaption>
+      <div class="diagramm__flaeche" data-flaeche></div>
+    </figure>
+
+    <figure class="diagramm" data-diagramm="fehler">
+      <figcaption>
+        <h3>Wo die Weiche danebenlag</h3>
+        <p>Ein Fehler ist entweder eine Freigabe, die ein Mensch hätte sehen müssen, oder eine unnötige
+        Prüfung. Der Hybrid macht nur die harmlose Sorte: 7 von 250 Dokumenten.</p>
+      </figcaption>
+      <div class="diagramm__flaeche" data-flaeche></div>
+    </figure>
+
+    <figure class="diagramm" data-diagramm="zeit">
+      <figcaption>
+        <h3>Antwortzeit je Dokument</h3>
+        <p>Der Hybrid antwortet im Median nach 1.977 ms. Jev allein entscheidet im Median in 338 ms, den
+        größten Teil der Zeit braucht Haiku zum Auslesen. DeepSeek V4 Pro braucht im Median 20.245 ms.</p>
+      </figcaption>
+      <div class="diagramm__flaeche" data-flaeche></div>
+    </figure>
+
+    <figure class="diagramm diagramm--breit" data-diagramm="form">
+      <figcaption>
+        <h3>Pflichtangaben richtig erkannt</h3>
+        <p>Die Dokumentart erkennen alle acht fast immer (99,6 bis 100 %). Die Unterschiede entstehen bei der
+        Formprüfung: von 86,4 % bis 98,4 %.</p>
+      </figcaption>
+      <div class="diagramm__flaeche" data-flaeche></div>
+    </figure>
+  </div>
+
+  <div class="huelle">
+    <h3 class="zwischentitel">Alle Messwerte</h3>
+    <table class="tabelle tabelle--alle">
+      <thead>
+        <tr><th scope="col">System</th><th scope="col">Weiche richtig</th><th scope="col">Fälschlich freigegeben</th><th scope="col">Unnötig zur Prüfung</th><th scope="col">Dokumentart</th><th scope="col">Lieferant</th><th scope="col">Formprüfung</th><th scope="col">Bruttobetrag</th><th scope="col">Antwortzeit Median</th><th scope="col">Antwortzeit 95 %</th><th scope="col">Kosten je 1.000 Dokumente</th><th scope="col">Ausfälle</th></tr>
+      </thead>
+      <tbody>
+        <tr><th scope="row">Claude Sonnet 5.5</th><td data-label="Weiche richtig">100,0 %</td><td data-label="Fälschlich freigegeben">0</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Dokumentart">100,0 %</td><td data-label="Lieferant">100,0 %</td><td data-label="Formprüfung">98,4 %</td><td data-label="Bruttobetrag">100,0 %</td><td data-label="Antwortzeit Median">3.601 ms</td><td data-label="Antwortzeit 95 %">4.704 ms</td><td data-label="Kosten je 1.000 Dokumente">10,12 $</td><td data-label="Ausfälle">0</td></tr>
+        <tr><th scope="row">DeepSeek V4 Pro</th><td data-label="Weiche richtig">100,0 %</td><td data-label="Fälschlich freigegeben">0</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Dokumentart">99,6 %</td><td data-label="Lieferant">99,6 %</td><td data-label="Formprüfung">96,4 %</td><td data-label="Bruttobetrag">100,0 %</td><td data-label="Antwortzeit Median">20.245 ms</td><td data-label="Antwortzeit 95 %">49.026 ms</td><td data-label="Kosten je 1.000 Dokumente">7,10 $</td><td data-label="Ausfälle">1</td></tr>
+        <tr><th scope="row">GPT-5.6 Terra</th><td data-label="Weiche richtig">98,4 %</td><td data-label="Fälschlich freigegeben">4</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Dokumentart">100,0 %</td><td data-label="Lieferant">100,0 %</td><td data-label="Formprüfung">90,8 %</td><td data-label="Bruttobetrag">100,0 %</td><td data-label="Antwortzeit Median">2.210 ms</td><td data-label="Antwortzeit 95 %">2.823 ms</td><td data-label="Kosten je 1.000 Dokumente">5,14 $</td><td data-label="Ausfälle">0</td></tr>
+        <tr><th scope="row">GPT-5.6 Luna</th><td data-label="Weiche richtig">98,0 %</td><td data-label="Fälschlich freigegeben">5</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Dokumentart">100,0 %</td><td data-label="Lieferant">100,0 %</td><td data-label="Formprüfung">89,6 %</td><td data-label="Bruttobetrag">100,0 %</td><td data-label="Antwortzeit Median">2.271 ms</td><td data-label="Antwortzeit 95 %">3.479 ms</td><td data-label="Kosten je 1.000 Dokumente">0,55 $</td><td data-label="Ausfälle">0</td></tr>
+        <tr class="tabelle__unser"><th scope="row">Jev + Claude Haiku 5.5</th><td data-label="Weiche richtig">97,2 %</td><td data-label="Fälschlich freigegeben">0</td><td data-label="Unnötig zur Prüfung">7</td><td data-label="Dokumentart">100,0 %</td><td data-label="Lieferant">99,6 %</td><td data-label="Formprüfung">93,6 %</td><td data-label="Bruttobetrag">100,0 %</td><td data-label="Antwortzeit Median">1.977 ms</td><td data-label="Antwortzeit 95 %">2.803 ms</td><td data-label="Kosten je 1.000 Dokumente">0,39 $</td><td data-label="Ausfälle">0</td></tr>
+        <tr><th scope="row">Mistral Small 3.1 24B</th><td data-label="Weiche richtig">96,0 %</td><td data-label="Fälschlich freigegeben">10</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Dokumentart">100,0 %</td><td data-label="Lieferant">100,0 %</td><td data-label="Formprüfung">86,4 %</td><td data-label="Bruttobetrag">98,1 %</td><td data-label="Antwortzeit Median">4.799 ms</td><td data-label="Antwortzeit 95 %">9.051 ms</td><td data-label="Kosten je 1.000 Dokumente">0,71 $</td><td data-label="Ausfälle">0</td></tr>
+        <tr><th scope="row">Llama 3.3 70B</th><td data-label="Weiche richtig">94,8 %</td><td data-label="Fälschlich freigegeben">13</td><td data-label="Unnötig zur Prüfung">0</td><td data-label="Dokumentart">100,0 %</td><td data-label="Lieferant">98,4 %</td><td data-label="Formprüfung">88,0 %</td><td data-label="Bruttobetrag">95,2 %</td><td data-label="Antwortzeit Median">5.478 ms</td><td data-label="Antwortzeit 95 %">7.540 ms</td><td data-label="Kosten je 1.000 Dokumente">0,89 $</td><td data-label="Ausfälle">0</td></tr>
+        <tr><th scope="row">Claude Haiku 5.5</th><td data-label="Weiche richtig">94,0 %</td><td data-label="Fälschlich freigegeben">1</td><td data-label="Unnötig zur Prüfung">14</td><td data-label="Dokumentart">100,0 %</td><td data-label="Lieferant">100,0 %</td><td data-label="Formprüfung">89,6 %</td><td data-label="Bruttobetrag">100,0 %</td><td data-label="Antwortzeit Median">2.492 ms</td><td data-label="Antwortzeit 95 %">3.307 ms</td><td data-label="Kosten je 1.000 Dokumente">0,52 $</td><td data-label="Ausfälle">0</td></tr>
+      </tbody>
+    </table>
+    <p class="bildunter">DeepSeek V4 Pro hat bei 7 Dokumenten eine leere Antwort geliefert und wurde einmal erneut
+    gefragt; 1 blieb leer und zählt als Ausfall. Kosten: abgerechnete Token mal Listenpreis vom
+    8. Oktober 2026.</p>
+
+    <h3 class="zwischentitel">So wurde gemessen</h3>
+    <dl class="verfahren">
+      <div><dt>Testsatz</dt><dd>250 künstliche Dokumente, Startwert 2026: 90 Rechnungen, 160 andere Dokumente aus 12 Arten</dd></div>
+      <div><dt>Formate</dt><dd>Brieftext, E-Mail, Scan mit Lesefehlern, Tabellenexport, Englisch, XRechnung</dd></div>
+      <div><dt>Eingebaute Fehler</dt><dd>falsche Summe, fehlende Umsatzsteuer-Identifikationsnummer, ausländischer Steuersatz, fehlende Rechnungsnummer, unbekannter Lieferant, Dublette</dd></div>
+      <div><dt>Weiche</dt><dd>für jedes System gleich, angewandt auf seine eigenen Antworten</dd></div>
+      <div><dt>Aufrufe</dt><dd>echte Anfragen, vier bis fünf gleichzeitig, von einem Cloud-Rechner im Oktober 2026</dd></div>
+      <div><dt>Grenzen</dt><dd>Der Testsatz ist künstlich, und jedes System hat alle Dokumentarten richtig zugeordnet; die Unterschiede entstehen bei Vollständigkeit, Auslesen und Sicherheit. Ein Lauf je System; die Antwortzeit hängt von der Auslastung der Anbieter zu dieser Stunde ab.</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- ============================== Präsentation ============================== -->
+<section id="praesentation" class="tafel" role="tabpanel" aria-labelledby="reiter-praesentation" tabindex="-1">
+  <div class="huelle tafel__kopf">
+    <h2>Rechnungseingang in sieben Szenen</h2>
+  </div>
+  <div class="huelle">
+    <div class="film" data-film>
+      <div class="film__bild" data-film-bild aria-roledescription="Präsentation" aria-label="Präsentation in sieben Szenen">
+
+        <section class="szene szene--postfach" data-szene aria-label="Szene 1 von 7: Das Postfach">
+          <div class="szene__bild" aria-hidden="true">
+            <span class="karte" data-k="1">Rechnung</span>
+            <span class="karte" data-k="2">Mahnung</span>
+            <span class="karte" data-k="3">Lieferschein</span>
+            <span class="karte" data-k="4">Gutschrift</span>
+            <span class="karte" data-k="5">Vertrag</span>
+            <span class="karte" data-k="6">Kontoauszug</span>
+            <span class="karte" data-k="7">Angebot</span>
+            <span class="karte karte--alarm" data-k="8">Scheinrechnung</span>
+            <span class="karte" data-k="9">Quittung</span>
+          </div>
+          <div class="szene__text"><h3>Im Postfach liegt alles durcheinander.</h3><p>Rechnungen zwischen Mahnungen, Lieferscheinen und Betrugsversuchen.</p></div>
+        </section>
+
+        <section class="szene szene--entscheiden" data-szene aria-label="Szene 2 von 7: Entscheiden">
+          <div class="szene__bild" aria-hidden="true">
+            <div class="wahl">
+              <div class="wahl__zeile"><span>Dokumentart</span><b>Rechnung</b><i class="wahl__balken"></i></div>
+              <div class="wahl__zeile"><span>Lieferant</span><b>Telekom</b><i class="wahl__balken"></i></div>
+              <div class="wahl__zeile"><span>Pflichtangaben</span><b>vollständig</b><i class="wahl__balken"></i></div>
+              <span class="wahl__schwelle">Schwelle</span>
+            </div>
+          </div>
+          <div class="szene__text"><h3>Jev entscheidet, ohne Text zu schreiben.</h3><p>Jede Antwort ist eine Wahl mit Wahrscheinlichkeit, nicht ein Absatz Prosa.</p></div>
+        </section>
+
+        <section class="szene szene--auslesen" data-szene aria-label="Szene 3 von 7: Auslesen">
+          <div class="szene__bild" aria-hidden="true">
+            <div class="mini-beleg">
+              <p class="mini-beleg__kopf">Telekom Deutschland GmbH</p>
+              <p class="mini-beleg__zeile" data-z="1"><span>Nettobetrag</span><span>152,15 €</span></p>
+              <p class="mini-beleg__zeile" data-z="2"><span>Umsatzsteuer 19 %</span><span>28,91 €</span></p>
+              <p class="mini-beleg__zeile" data-z="3"><span>Rechnungsbetrag</span><span>181,06 €</span></p>
+            </div>
+            <div class="felder">
+              <p data-f="1"><span>Netto</span><b>152,15</b></p>
+              <p data-f="2"><span>Steuer</span><b>28,91</b></p>
+              <p data-f="3"><span>Brutto</span><b>181,06</b></p>
+            </div>
+          </div>
+          <div class="szene__text"><h3>Claude Haiku 5.5 liest die Beträge.</h3><p>So, wie sie gedruckt sind, ohne stillschweigend zu korrigieren.</p></div>
+        </section>
+
+        <section class="szene szene--rechnen" data-szene aria-label="Szene 4 von 7: Nachrechnen">
+          <div class="szene__bild" aria-hidden="true">
+            <p class="gleichung gleichung--gut"><span>152,15 + 28,91</span><span class="gleichung__zeichen">=</span><span>181,06</span></p>
+            <p class="gleichung gleichung--schlecht"><span>760,55 + 144,50</span><span class="gleichung__zeichen">≠</span><span>914,05</span></p>
+          </div>
+          <div class="szene__text"><h3>Programmcode rechnet nach, statt zu raten.</h3><p>Stimmt die Summe nicht, geht die Rechnung zu einem Menschen.</p></div>
+        </section>
+
+        <section class="szene szene--buchen" data-szene aria-label="Szene 5 von 7: Buchen">
+          <div class="szene__bild" aria-hidden="true">
+            <div class="ablage ablage--a"><span>Gebucht</span></div>
+            <div class="ablage ablage--b"><span>Zur Prüfung</span></div>
+            <div class="flug flug--eins">412 7781 30519</div>
+            <div class="flug flug--zwei">412 7781 30519</div>
+          </div>
+          <div class="szene__text"><h3>Gebucht wird nur, was sicher ist. Und nur einmal.</h3><p>Die Datenbank schickt eine zweite gleiche Rechnung in die Prüfung.</p></div>
+        </section>
+
+        <section class="szene szene--messen" data-szene aria-label="Szene 6 von 7: Messen">
+          <div class="szene__bild" aria-hidden="true">
+            <div class="feld-punkte">
+              <i data-p="1"></i><i data-p="2"></i><i data-p="3"></i><i data-p="4"></i><i data-p="5"></i><i data-p="6"></i><i data-p="7"></i><i class="feld-punkte__unser" data-p="8"></i>
+              <span class="feld-punkte__achse feld-punkte__achse--x">günstiger</span>
+              <span class="feld-punkte__achse feld-punkte__achse--y">sicherer</span>
+            </div>
+          </div>
+          <div class="szene__text"><h3>Gemessen statt behauptet.</h3><p>Acht Systeme, dieselben 250 synthetischen Dokumente. Der Hybrid ist sicher und am günstigsten.</p></div>
+        </section>
+
+        <section class="szene szene--abspann" data-szene aria-label="Szene 7 von 7: Gebaut mit">
+          <div class="szene__bild">
+            <ul class="abspann">
+              <li>Automatisierung mit n8n</li>
+              <li>Feste Entscheidungen mit Jev</li>
+              <li>Auslesen mit Claude Haiku 5.5</li>
+              <li>Regelprüfung in Python und JavaScript</li>
+              <li>PostgreSQL mit Trigger und Zeilenrechten</li>
+              <li>Cloudflare Workers AI und Pages</li>
+              <li>Messreihen gegen acht Systeme</li>
+              <li>Continuous Integration</li>
+            </ul>
+          </div>
+          <div class="szene__text"><h3>Gebaut mit</h3><p><a class="knopf knopf--gold" href="https://danielironhack247-idp.hf.space/form/rechnungseingang">Live ausprobieren</a></p></div>
+        </section>
+
+      </div>
+      <div class="film__leiste">
+        <button type="button" class="abspiel" data-film-abspiel aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path class="abspiel__pause" d="M8 5v14M16 5v14"/><path class="abspiel__start" d="M7 4.5l12 7.5-12 7.5z"/></svg>
+          <span class="abspiel__text">Abspielen</span>
+        </button>
+        <ol class="kapitel" aria-label="Kapitel">
+          <li><button type="button" data-kapitel="0"><span>Postfach</span><i></i></button></li>
+          <li><button type="button" data-kapitel="1"><span>Entscheiden</span><i></i></button></li>
+          <li><button type="button" data-kapitel="2"><span>Auslesen</span><i></i></button></li>
+          <li><button type="button" data-kapitel="3"><span>Nachrechnen</span><i></i></button></li>
+          <li><button type="button" data-kapitel="4"><span>Buchen</span><i></i></button></li>
+          <li><button type="button" data-kapitel="5"><span>Messen</span><i></i></button></li>
+          <li><button type="button" data-kapitel="6"><span>Gebaut mit</span><i></i></button></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="fuss">
+  <div class="huelle fuss__zeile">
+    <p class="fuss__marke"><svg viewBox="0 0 100 100" aria-hidden="true"><use href="#repocity-zeichen"/></svg><span>RepoCity</span></p>
+    <p>Daniel Hütte, AI Agent Engineer, Münster</p>
+    <p class="fuss__links">
+      <a href="https://github.com/DanielHuette/IntelligentDocumentProcessing">Quelltext auf GitHub</a>
+      <a href="https://speedofthespirit.dev">speedofthespirit.dev</a>
+    </p>
+  </div>
+</footer>
+
+<div class="dock" role="tablist" aria-label="Ansichten">
+  <button type="button" class="dock__reiter" role="tab" id="reiter-projekt" aria-controls="projekt" aria-selected="true" data-reiter="projekt">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h8l3.5 3.5V21h-11.5z"/><path d="M9.5 10h6M9.5 13.5h6M9.5 17h3.5"/></svg>
+    <span>Projekt</span>
+  </button>
+  <button type="button" class="dock__reiter" role="tab" id="reiter-organigramm" aria-controls="organigramm" aria-selected="false" tabindex="-1" data-reiter="organigramm">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></svg>
+    <span>Organigramm</span>
+  </button>
+  <button type="button" class="dock__reiter" role="tab" id="reiter-benchmarks" aria-controls="benchmarks" aria-selected="false" tabindex="-1" data-reiter="benchmarks">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M7 20v-6M12 20V6M17 20v-9"/></svg>
+    <span>Benchmarks</span>
+  </button>
+  <button type="button" class="dock__reiter" role="tab" id="reiter-praesentation" aria-controls="praesentation" aria-selected="false" tabindex="-1" data-reiter="praesentation">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4.5" width="18" height="13" rx="2"/><path d="M10.5 8.5l4 2.5-4 2.5z"/><path d="M8 21h8"/></svg>
+    <span>Präsentation</span>
+  </button>
+</div>
+
+<svg class="unsichtbar" aria-hidden="true">
+  <defs>
+    <linearGradient id="repocity-gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3e3bf"/><stop offset="0.32" stop-color="#cdb07a"/><stop offset="0.55" stop-color="#9c7f52"/><stop offset="0.78" stop-color="#e2c993"/><stop offset="1" stop-color="#8a6c43"/>
+    </linearGradient>
+    <symbol id="repocity-zeichen" viewBox="0 0 100 100">
+      <g fill="url(#repocity-gold)">
+        <path fill-rule="evenodd" d="M50 2.5a47.5 47.5 0 1 1 0 95a47.5 47.5 0 1 1 0-95zm0 5a42.5 42.5 0 1 0 0 85a42.5 42.5 0 1 0 0-85z"/>
+        <rect x="31.8" y="46.3" width="8.8" height="18"/><rect x="47.1" y="24.9" width="8.8" height="39.4"/><rect x="62.6" y="36.6" width="8.8" height="27.7"/><rect x="12.4" y="64.9" width="75.2" height="4.4"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+</body>
+</html>
